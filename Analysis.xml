@@ -314,4 +314,16 @@ So in the 27 iterations - we get 14067 calls to model.
 How does the stocks and parms$beta change as these evolve within a single 
 
 
+The nested for() loops  seem to be easily converted to separate functions.
+
+
+callFun = 
+function() {
+  sym = character()
+  
+}
+  
+trace(.Call, , print = TRUE)
+
 </doc>
+

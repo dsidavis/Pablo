@@ -25,11 +25,11 @@ function(beta_list, rho_list, D, time, v, D_imm, Farms, nsims = 2, verbose = TRU
 
 for(k in 1:nsims) {
   loop=0
- 
+
     # doesn't depend on i or j
-  parameters <- list("beta" = beta_matrix, "delays"=D[[k]], 
-                     "mort"= v[[k]], "returns"=D_imm[[k]]) #remove farms.  
-  
+  parameters <- list("delays"=D[[k]], "mort"= v[[k]], "returns"=D_imm[[k]]) #remove farms.  
+ 
+ 
   for(i in 1:3){
     beta = beta_list[[i]]
     
@@ -40,7 +40,7 @@ for(k in 1:nsims) {
       loop = loop + 1
       
       rho = rho_list[[j]]
-      beta_matrix = rho * beta 
+      parameters$beta = rho * beta 
      
       tmp = ode(y = stocks, times = time, func = model, parms = parameters, method = "euler")
         # Can this be just a simple tmp[,1] < 26
