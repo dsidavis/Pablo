@@ -1,0 +1,3 @@
+p = c("deSolve", "ggplot2", "dplyr", "plyr", "reshape2", "base",
+"MASS", "FME", "lhs", "zoo", "igraph", "EpiContactTrace", "RColorBrewer",
+"maps", "doBy", "grid", "gridExtra", "nlme", "multcomp")

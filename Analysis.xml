@@ -1,0 +1,317 @@
+<doc>
+
+
+We start by determining which packages we need to install.
+I like to do this programmatically rather than by hand or just waiting to see what fails.
+We use the  CodeDepends package
+
+<r:code>
+library(devtools)
+install_github("duncantl/CodeDepends")
+library(CodeDepends)
+</r:code>
+
+<r:code>
+sc = readScript("DTL.R")
+sci = as(sc, "ScriptInfo")
+</r:code>
+
+Now we can loop over the elements and extract the <r:slot>libraries</r:slot>
+slot from each:
+<r:code>
+lib = unlist(lapply(sci, slot, "libraries"))
+<r:output>
+ [1] "ggplot2"         "dplyr"           "plyr"            "reshape2"       
+ [5] "base"            "MASS"            "FME"             "lhs"            
+ [9] "zoo"             "igraph"          "EpiContactTrace" "RColorBrewer"   
+[13] "maps"            "doBy"            "grid"            "gridExtra"      
+[17] "nlme"            "multcomp"       
+</r:output>
+</r:code>
+Now we can install all of these with
+<r:code>
+install.packages(libs)
+</r:code>
+and hopefully all will be installed successfully.
+
+
+We change find the files the code reads with 
+<r:code>
+unlist(lapply(sci, slot, "files"))
+</r:code>
+This yields matrix_to_D.csv and Farms_to_D.csv.
+We manually changed these to remove a machine-specific path.
+
+There were many calls to saveRDS with explicit file paths that are not portable to anybody else's machine.
+Use relative paths. But ideally allow the caller to control whether these are written.
+
+Now that we have the code, we'll run it and profile it.
+<r:code>
+Rprof("prof")
+tm = system.time(source("DTL.R", verbose = TRUE))
+Rprof(NULL)
+</r:code>
+
+<r:code>
+summaryRprof("prof")$by.self
+<r:output>
+                            self.time self.pct total.time total.pct
+"grep"                         194.50    40.26     194.62     40.29
+"%*%"                          181.04    37.47     181.04     37.47
+"scan"                          20.68     4.28      20.68      4.28
+"c"                             13.68     2.83      13.68      2.83
+"func"                           9.08     1.88     404.36     83.70
+".Call"                          7.08     1.47     411.78     85.24
+"as.vector"                      5.42     1.12       6.40      1.32
+"[.data.frame"                   4.10     0.85      11.46      2.37
+".External2"                     3.78     0.78       3.78      0.78
+"unique.default"                 3.20     0.66       3.20      0.66
+"cast"                           3.18     0.66      14.30      2.96
+"duplicated.default"             2.98     0.62       2.98      0.62
+"with"                           2.66     0.55     201.36     41.68
+"<Anonymous>"                    2.04     0.42     410.10     84.89
+"-"                              1.96     0.41       1.96      0.41
+"eval"                           1.90     0.39     482.52     99.88
+"ifelse"                         1.82     0.38       2.04      0.42
+"levels"                         1.28     0.26       1.72      0.36
+"/"                              1.16     0.24       1.16      0.24
+"match"                          1.16     0.24       1.16      0.24
+"[[.data.frame"                  1.06     0.22       3.32      0.69
+"as.matrix.data.frame"           1.06     0.22       3.18      0.66
+"[["                             1.04     0.22       4.36      0.90
+"["                              1.02     0.21      12.48      2.58
+"*"                              0.92     0.19       0.92      0.19
+"rk"                             0.82     0.17     414.76     85.85
+"make.names"                     0.82     0.17       0.88      0.18
+"NextMethod"                     0.82     0.17       0.82      0.17
+"structure"                      0.76     0.16       1.06      0.22
+"make.unique"                    0.72     0.15       1.00      0.21
+"saveOutrk"                      0.68     0.14       0.72      0.15
+"nzchar"                         0.62     0.13       0.62      0.13
+"id"                             0.60     0.12       2.34      0.48
+"%in%"                           0.56     0.12       1.26      0.26
+"sys.call"                       0.56     0.12       0.56      0.12
+"apply"                          0.44     0.09       4.52      0.94
+"attr"                           0.44     0.09       0.44      0.09
+"lazyLoadDBfetch"                0.38     0.08       0.50      0.10
+"merge.data.frame"               0.36     0.07       5.64      1.17
+"as.character"                   0.30     0.06       0.38      0.08
+"sort.list"                      0.28     0.06       0.30      0.06
+"!"                              0.28     0.06       0.28      0.06
+"as.data.frame.matrix"           0.24     0.05       6.66      1.38
+"as.integer"                     0.24     0.05       0.24      0.05
+"cbind"                          0.20     0.04       0.80      0.17
+"findCenvVar"                    0.20     0.04       0.30      0.06
+"names"                          0.20     0.04       0.20      0.04
+"unlist"                         0.18     0.04       0.34      0.07
+"all"                            0.18     0.04       0.18      0.04
+"length"                         0.18     0.04       0.18      0.04
+"which"                          0.16     0.03       2.44      0.51
+"+"                              0.16     0.03       0.16      0.03
+"diag<-"                         0.16     0.03       0.16      0.03
+">"                              0.14     0.03       0.14      0.03
+"levels.default"                 0.12     0.02       0.44      0.09
+"findHomeNS"                     0.12     0.02       0.12      0.02
+"max"                            0.12     0.02       0.12      0.02
+"with.default"                   0.10     0.02     198.48     41.08
+"FUN"                            0.10     0.02       3.72      0.77
+"cat"                            0.10     0.02       0.30      0.06
+".subset2"                       0.10     0.02       0.10      0.02
+"is.matrix"                      0.10     0.02       0.10      0.02
+"mkenv"                          0.10     0.02       0.10      0.02
+"unique"                         0.08     0.02       3.38      0.70
+"$"                              0.08     0.02       0.10      0.02
+"cb$putcode"                     0.08     0.02       0.10      0.02
+"as.list"                        0.08     0.02       0.08      0.02
+"dim"                            0.08     0.02       0.08      0.02
+"parent.frame"                   0.08     0.02       0.08      0.02
+"source"                         0.06     0.01     483.10    100.00
+"data.frame"                     0.06     0.01     423.14     87.59
+"acast"                          0.06     0.01      14.58      3.02
+"mode"                           0.06     0.01       0.08      0.02
+"paste0"                         0.06     0.01       0.08      0.02
+".subset"                        0.06     0.01       0.06      0.01
+"any"                            0.06     0.01       0.06      0.01
+"anyDuplicated.default"          0.06     0.01       0.06      0.01
+"list"                           0.06     0.01       0.06      0.01
+"getGeneric"                     0.04     0.01       0.16      0.03
+"parse"                          0.04     0.01       0.10      0.02
+"is"                             0.04     0.01       0.06      0.01
+".cacheGenericTable"             0.04     0.01       0.04      0.01
+".getGenericFromCacheTable"      0.04     0.01       0.04      0.01
+".getNamespaceInfo"              0.04     0.01       0.04      0.01
+".identC"                        0.04     0.01       0.04      0.01
+"aperm.default"                  0.04     0.01       0.04      0.01
+"delayedAssign"                  0.04     0.01       0.04      0.01
+"dyn.load"                       0.04     0.01       0.04      0.01
+"getSrcLines"                    0.04     0.01       0.04      0.01
+"gettext"                        0.04     0.01       0.04      0.01
+"grepl"                          0.04     0.01       0.04      0.01
+"options"                        0.04     0.01       0.04      0.01
+"sub"                            0.04     0.01       0.04      0.01
+"as.data.frame"                  0.02     0.00       6.78      1.40
+"lapply"                         0.02     0.00       3.72      0.77
+"duplicated"                     0.02     0.00       3.00      0.62
+"order"                          0.02     0.00       1.48      0.31
+"loadNamespace"                  0.02     0.00       1.18      0.24
+"namespaceImportFrom"            0.02     0.00       0.86      0.18
+"cmp"                            0.02     0.00       0.76      0.16
+"cmpCall"                        0.02     0.00       0.76      0.16
+"tryInline"                      0.02     0.00       0.76      0.16
+"cmpCallArgs"                    0.02     0.00       0.38      0.08
+"do.call"                        0.02     0.00       0.38      0.08
+"rkMethod"                       0.02     0.00       0.34      0.07
+"str.default"                    0.02     0.00       0.22      0.05
+".checkGroupSigLength"           0.02     0.00       0.20      0.04
+"deparse"                        0.02     0.00       0.18      0.04
+".recMembers"                    0.02     0.00       0.14      0.03
+"paste"                          0.02     0.00       0.12      0.02
+"as.character.srcref"            0.02     0.00       0.08      0.02
+"as.data.frame.numeric"          0.02     0.00       0.08      0.02
+"checkConflicts"                 0.02     0.00       0.08      0.02
+"fun"                            0.02     0.00       0.08      0.02
+".getGeneric"                    0.02     0.00       0.06      0.01
+".mergeMethodsTable"             0.02     0.00       0.06      0.01
+"getClassDef"                    0.02     0.00       0.06      0.01
+"getOption"                      0.02     0.00       0.06      0.01
+"quickdf"                        0.02     0.00       0.06      0.01
+"matrix"                         0.02     0.00       0.04      0.01
+"modifyList"                     0.02     0.00       0.04      0.01
+"prettyNum"                      0.02     0.00       0.04      0.01
+"print"                          0.02     0.00       0.04      0.01
+"withCallingHandlers"            0.02     0.00       0.04      0.01
+".resetInheritedMethods"         0.02     0.00       0.02      0.00
+"as.double"                      0.02     0.00       0.02      0.00
+"cb$setcurexpr"                  0.02     0.00       0.02      0.00
+"character"                      0.02     0.00       0.02      0.00
+"cmpConst"                       0.02     0.00       0.02      0.00
+"Encoding<-"                     0.02     0.00       0.02      0.00
+"exists"                         0.02     0.00       0.02      0.00
+"existsInFrame"                  0.02     0.00       0.02      0.00
+"gzfile"                         0.02     0.00       0.02      0.00
+"is.numeric"                     0.02     0.00       0.02      0.00
+"l10n_info"                      0.02     0.00       0.02      0.00
+"make.callContext"               0.02     0.00       0.02      0.00
+"make.codeBuf"                   0.02     0.00       0.02      0.00
+"make.promiseContext"            0.02     0.00       0.02      0.00
+"match.fun"                      0.02     0.00       0.02      0.00
+"mayCallBrowser"                 0.02     0.00       0.02      0.00
+"methodsPackageMetaName"         0.02     0.00       0.02      0.00
+"nargs"                          0.02     0.00       0.02      0.00
+"pmatch"                         0.02     0.00       0.02      0.00
+"putconst"                       0.02     0.00       0.02      0.00
+"setIstate"                      0.02     0.00       0.02      0.00
+</r:output>
+</r:code>
+
+
+While that is running, let's find out what the file contains, i.e., functions, etc.
+
+
+Find the functions
+i = (sapply(sci, function(x) if(length(x@code) > 2) x@code[[3]][[1]] == "function" else FALSE))
+#sapply(sci[ which(!is.na(i) & i) ], slot, "code")
+cat(sapply(sci[ which(!is.na(i) & i) ], function(x) paste(deparse(x@code), collapse = "\n")), sep = "\n\n", file = "functions.R")
+
+
+
+
+Find the for loops
+fors = which(sapply(sci, function(x) class(x@code) == "for"))
+for.code = sapply(sci[fors], slot, "code")
+
+Are they all the same?
+We'll compare each to the first one.
+
+for.code.p = lapply(for.code, deparse)
+sapply(for.code.p, length)  # all 31.
+
+diff = sapply(for.code.p[-1], function(x, b) { w = (x != b) ; cbind(x[w], b[w])}, for.code.p[[1]])
+
+The differences are in the parameters for the simulation
+beta, rho, parameters
+
+beta_listV25, beta_listV50, 75, 100
+rho_list, rho_list_F80_50, rho_list_F40_50  F40_100, 80_25,  80_100 40_75
+D, D100, D25, D75,D50
+
+
+Once we have made the basic function in loopFun. We debug it and check the class of the different objects.
+out is a ~500 x 2500 data frame.
+
+Remove the c() around the grep()
+Why use value = TRUE in the grep and then match by name.
+
+out is  a data.frame, but apply turns into a matrix. 3 times. 
+Do the conversion just once.  But do we need out to be a data.frame at this stage
+
+But we can probably do better and avoid the grep()s.
+
+stocks is a loop invariant
+
+parameters is also loop invariant for i and j but not k.
+
+
+Why are 3 and 9 hard coded?
+
+
+The greps are in the model function as is the %*%.
+
+
+In the functions.R we created, only model seems to be used in the for() loops.
+
+
+
+e = new.env(); source("functions.R", e)
+sapply(ls(e), function(x) codetools::findGlobals( get(x, e)))
+
+codetools::findGlobals(doSim)
+ [1] ":"           "("           "["           "[["          "[[<-"        "{"          
+ [7] "*"           "/"           "%in%"        "+"           "<-"          "="          
+[13] "$"           "$<-"         "apply"       "c"           "cat"         "data.frame" 
+[19] "expand.grid" "for"         "if"          "list"        "matrix"      "model"      
+[25] "nrow"        "ode"         "paste0"      "return"      "rowSums"     "seq"        
+[31] "sprintf"     "structure"   "vector"     
+
+intersect(codetools::findGlobals(doSim) , ls(e))
+[1] "model"
+
+
+For the %*% in model(), what about using a better BLAS - parallel.
+
+
+model3.R and loopFun.R  get the run time down to approximately 60% of the original run time.
+
+Leaves us with profiling information
+summaryRprof("prof")$by.self
+                 self.time self.pct total.time total.pct
+"%*%"                14.46    67.63      14.46     67.63
+"split.default"       1.30     6.08       3.18     14.87
+"c"                   1.28     5.99       1.28      5.99
+".Call"               0.96     4.49      20.34     95.14
+"gc"                  0.54     2.53       0.54      2.53
+"as.factor"           0.52     2.43       1.84      8.61
+"unique.default"      0.48     2.25       0.50      2.34
+"func"                0.34     1.59      19.32     90.36
+
+func is model in this case.  It is the func parameter in ode()
+
+We can probably avoid the split.default
+
+When model() is called in each  iteration of doSim() 
+
+
+source("~/EfficientR/traceCalls.R")
+
+m = genCounter()
+trace(model, quote(m("model")), print = FALSE)
+system.time({o = doSim(beta_list = beta_listV25, rho_list = rho_list, D = D25, time = time, v = v, D_imm = D_imm, Farms = Farms, nsims = 1, verbose = TRUE)})
+environment(m)$ans
+model 
+14067 
+
+So in the 27 iterations - we get 14067 calls to model.
+How does the stocks and parms$beta change as these evolve within a single 
+
+
+</doc>

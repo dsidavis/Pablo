@@ -1,0 +1,2 @@
+You are repeating the same code, i.e., the loops. Put it into a function and
+call that function with different arguments.
