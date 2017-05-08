@@ -290,6 +290,7 @@ summaryRprof("prof")$by.self
 "as.factor"           0.52     2.43       1.84      8.61
 "unique.default"      0.48     2.25       0.50      2.34
 "func"                0.34     1.59      19.32     90.36
+...
 </r:output>
 </r:code>
 func is model in this case.  It is the <r:arg>func</r:arg> parameter in ode()
@@ -323,6 +324,9 @@ Are they constant?
 
 <para>
 The nested for() loops  seem to be easily converted to separate functions.
+note that they are not slow. We can see this from the profiling results.
+If they were taking significant time, <r:func>doSim</r:func> would be charged the time.
+But this is less than 1.5 percent. 
 </para>
 
 <section>
